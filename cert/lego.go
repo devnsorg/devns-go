@@ -6,15 +6,19 @@ import (
 	"log"
 )
 
-func StartCertFlow(domain string, email string) {
+func StartCertFlow(domain string, email string, dryrun bool) {
 	var err error
-
+	var client *MyClient
 	user, err := NewMyUserFromEmail(email)
 	if err != nil {
 		log.Fatalln(err)
 	}
+	if dryrun {
+		client, err = NewMyClient(user, lego.LEDirectoryStaging)
+	} else {
+		client, err = NewMyClient(user, lego.LEDirectoryProduction)
+	}
 
-	client, err := NewMyClient(user, lego.LEDirectoryStaging)
 	if err != nil {
 		log.Fatalln(err)
 	}

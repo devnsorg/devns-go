@@ -15,6 +15,7 @@ var nameserverF = flag.String("nameserver", "ns.example.com.", "[MUST CHANGE] Pr
 var soaEmailF = flag.String("soa-email", "john\\n.doe.example.com.", "Email for SOA must end with period(.)")
 var withTlsF = flag.Bool("tls", false, "Turn on TLS mode")
 var tlsEmailF = flag.String("tls-email", "john.doe@example.com", "[MUST CHANGE] Email for letsencrypt registration")
+var tlsDryRunF = flag.Bool("tls-dryrun", false, "Set to use STAGING ACME Directory")
 var helpF = flag.Bool("h", false, "Print this help")
 
 func main() {
@@ -34,7 +35,7 @@ func main() {
 	if *withTlsF {
 		if len(*tlsEmailF) > 0 {
 			if len(*rootDomainF) > 0 {
-				go cert.StartCertFlow("*."+*rootDomainF, *tlsEmailF)
+				go cert.StartCertFlow("*."+*rootDomainF, *tlsEmailF, *tlsDryRunF)
 			}
 		}
 	}
