@@ -12,14 +12,29 @@ Support local development with proper HTTPS configuration without dealing with s
     localhost.ipv6.iptls.com ::1 
     ```
 
-- [ ] Enable TLS for all subdomain
+- [x] Support TLS certificate generation
   ```
-  An endpoint to download a wildcard certificate/key to use in your own server  
+  Generate a wildcard certificate to use in your own server  
   ```
 - [ ] Metrics
 
 ## Usage
 
 ```shell
-go build
+Usage of ./dnsserver:
+  -domain string
+        [MUST CHANGE] Base domain for DNS resolution (default "example.com")
+  -h    Print this help
+  -nameserver string
+        [MUST CHANGE] Primary NS for SOA must end with period(.) (default "ns.example.com.")
+  -port int
+        Port for DNS server to listen to (default 53)
+  -soa-email string
+        Email for SOA must end with period(.) (default "john\\n.doe.example.com.")
+  -tls
+        Turn on TLS mode
+  -tls-dryrun
+        Set to use STAGING ACME Directory
+  -tls-email string
+        [MUST CHANGE] Email for letsencrypt registration (default "john.doe@example.com")
 ```
