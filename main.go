@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/ipTLS/dnsserver/cert"
 	"github.com/miekg/dns"
 	"log"
 	"strconv"
@@ -17,7 +18,7 @@ var v6RootDomainF = flag.String("v6Domain", "", "Base domain for DNS resolution"
 func parseQuery(rootDomain string, dnsMessage *dns.Msg) {
 	for _, question := range dnsMessage.Question {
 		log.Printf("Query for %s\n", question.String())
-		ip := strings.ReplaceAll(question.Name, "."+rootDomain+".", "")
+		answer := strings.ReplaceAll(question.Name, "."+rootDomain+".", "")
 		var err error
 		var rr dns.RR
 		var recordType string
@@ -26,19 +27,25 @@ func parseQuery(rootDomain string, dnsMessage *dns.Msg) {
 		case dns.TypeAAAA:
 			recordType = "AAAA"
 			localIP = "::1"
-			ip = strings.ReplaceAll(ip, "-", ":")
+			answer = strings.ReplaceAll(answer, "-", ":")
 		case dns.TypeA:
 			recordType = "A"
 			localIP = "127.0.0.1"
-			ip = strings.ReplaceAll(ip, "-", ".")
+			answer = strings.ReplaceAll(answer, "-", ".")
+		case dns.TypeTXT:
+			recordType = "TXT"
+			cert.GetChallenge(question.Name)
 		default:
 			err = errors.New(question.String())
 		}
 		if err == nil {
-			if ip == "localhost" {
-				ip = localIP
+			switch answer {
+			case "_acme-challenge":
+				answer = cert.GetChallenge(question.Name)
+			case "localhost":
+				answer = localIP
 			}
-			rr, err = dns.NewRR(fmt.Sprintf("%s %s %s", question.Name, recordType, ip))
+			rr, err = dns.NewRR(fmt.Sprintf("%s %s %s", question.Name, recordType, answer))
 		}
 		if err == nil {
 			log.Printf("Answer for %s\n", rr.String())
