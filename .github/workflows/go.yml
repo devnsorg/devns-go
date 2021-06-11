@@ -16,7 +16,7 @@ jobs:
       matrix:
         goos: [linux, darwin]
         goarch: [amd64]
-        module: [tlsapi dnsserver]
+        module: [tlsapi, dnsserver]
     steps:
     - uses: actions/checkout@v2
 
