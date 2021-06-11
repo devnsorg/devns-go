@@ -15,5 +15,5 @@
 # vendor/
 
 *.iml
-dnsserver
+tlsapi
 /cert/key.pem

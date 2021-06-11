@@ -1,6 +1,9 @@
-# dnsserver
+# ipTLS
 
-Support local development with proper HTTPS configuration without dealing with manually trusting self-signed CA certificates.
+Support local development
+
+- proper HTTPS configuration without dealing with manually trusting self-signed CA certificates.
+- Tunneling using Wireguard
 
 ## Important/Disclaimer
 
@@ -9,7 +12,7 @@ Support local development with proper HTTPS configuration without dealing with m
 
 ## Features
 
-- [x] Resolve IP domain into IP
+- [x] Resolve IP domain into IP using `dnsserver` module
   ```
   # HOSTS
   1-2-3-4.iptls.com 1.2.3.4
@@ -18,44 +21,17 @@ Support local development with proper HTTPS configuration without dealing with m
   localhost.iptls.com ::1 
   ```
 
-- [x] Support TLS for all subdomains (requires your server to serve with our certificate) 
+- [x] Support TLS for all subdomains using `tlsapi` module (requires your server to serve with our certificate) 
   ```  
   https://1-2-3-4.iptls.com
   https://2400-cb00-2049-1--a29f-1804.iptls.com      
   https://localhost.iptls.com
   ```
-
-- [ ] Auto-renew certificate (let's encrypt only provides 3-months certificate)
-
-- [ ] Protection against malicious certificate revocation 
-
-- [ ] 3rd party integration guide for production use
   
+- [ ] Support tunneling using Wireguard
+ 
 - [ ] Metrics
 
 ## Usage
-
-### CLI
-
-```shell
-Usage of ./dnsserver:
-  -domain string
-        [MUST CHANGE] Base domain for DNS resolution (default "example.com")
-  -h    Print this help
-  -nameserver string
-        [MUST CHANGE] Primary NS for SOA must end with period(.) (default "ns.example.com.")
-  -port int
-        Port for DNS server to listen to (default 53)
-  -soa-email string
-        Email for SOA must end with period(.) (default "john\\n.doe.example.com.")
-  -tls
-        Turn on TLS mode
-  -tls-dryrun
-        Set to use STAGING ACME Directory
-  -tls-email string
-        [MUST CHANGE] Email for letsencrypt registration (default "john.doe@example.com")
-```
-
-### Get certificate
 
 TODO

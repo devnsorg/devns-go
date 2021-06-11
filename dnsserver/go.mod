@@ -1,4 +1,4 @@
-module github.com/ipTLS/dnsserver
+module github.com/ipTLS/ipTLS/dnsserver
 
 go 1.16
 

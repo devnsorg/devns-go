@@ -16,6 +16,7 @@ jobs:
       matrix:
         goos: [linux, darwin]
         goarch: [amd64]
+        module: [tlsapi dnsserver]
     steps:
     - uses: actions/checkout@v2
 
@@ -26,10 +27,12 @@ jobs:
 
     - name: Build
       env:
+        MODULE: ${{ matrix.module }}
         GOOS: ${{ matrix.goos }}
         GOARCH: ${{ matrix.goarch }}
         VERSION: ${{ github.event.release.tag_name }}
-      run: go build -o dnsserver-$GOOS-$GOARCH-$VERSION
+      working-directory: ./${{ matrix.module }}
+      run: go build -o ../build/$MODULE-$GOOS-$GOARCH-$VERSION
     - name: GH Release
       # You may pin to the exact commit or the version.
       # uses: softprops/action-gh-release@b7e450da2a4b4cb4bfbae528f788167786cfcedf
@@ -42,4 +45,4 @@ jobs:
         # Identify the release as a prerelease. Defaults to false
         prerelease: false
         # Newline-delimited list of path globs for asset files to upload
-        files: dnsserver-*
+        files: "build/*"
