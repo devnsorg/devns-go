@@ -104,10 +104,9 @@ func (s *WGServer) createDevice() (string, tun.Device, *device.Device) {
 }
 
 func (s *WGServer) configureDevice() {
-	c, d := getUapi(s.iface, s.logger, s.errs)
+	c, _ := getUapi(s.iface, s.logger, s.errs)
 
 	pk, err := wgtypes.GeneratePrivateKey()
-	d.PrivateKey = pk
 
 	listenPort := 51820
 
@@ -201,13 +200,13 @@ func (s *WGServer) configureServerIP() {
 	}
 	s.logger.Verbosef("%s\n", stdoutStderr)
 
-	//route := exec.Command("route", strings.Split("-q -n add -inet 10.44.0.1/24 -interface utun2", " ")...)
-	//stdoutStderr, err = route.CombinedOutput()
-	//if err != nil {
-	//	logger.Errorf("ERROR %#v", err)
-	//	errs <- err
-	//}
-	//logger.Verbosef("%s\n", stdoutStderr)
+	route := exec.Command("route", strings.Split(fmt.Sprintf("-q -n add -inet %s -interface %s", serverIPNet.String(), s.iface), " ")...)
+	stdoutStderr, err = route.CombinedOutput()
+	if err != nil {
+		s.logger.Errorf("ERROR %#v", err)
+		s.errs <- err
+	}
+	s.logger.Verbosef("%s\n", stdoutStderr)
 }
 
 func checkIsRoot(logger *device.Logger) (bool, error) {
