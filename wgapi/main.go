@@ -36,17 +36,20 @@ func main() {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGTERM)
 	signal.Notify(signalChan, os.Interrupt)
+	var wgServer *mywgserver.WGServer
 	go func() {
 		select {
 		case sig := <-signalChan:
 			logger.Errorf("signalChan %#v", sig)
+			wgServer.StopServer()
 			os.Exit(0)
 		case err := <-errsChan:
 			logger.Errorf("ERRSCHAN %#v", err)
+			wgServer.StopServer()
 			os.Exit(2)
 		}
 	}()
-	wgServer := mywgserver.NewWGServer("192.168.0.11:51820", "10.44.0.1/23", logger, errsChan)
+	wgServer = mywgserver.NewWGServer("192.168.1.124:51820", "10.44.0.1/23", logger, errsChan)
 	wgChan := wgServer.StartServer()
 	logger.Verbosef("WG STARTED")
 	httpServer := myhttpserver.NewHTTPServer(9999, wgServer, logger, errsChan)

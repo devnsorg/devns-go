@@ -18,11 +18,14 @@ import (
 )
 
 type WGServer struct {
-	endpoint *net.UDPAddr
-	pool     *util.IPPool
-	logger   *device.Logger
-	errs     chan error
-	iface    string
+	endpoint      *net.UDPAddr
+	pool          *util.IPPool
+	logger        *device.Logger
+	errs          chan error
+	iface         string
+	createdTun    tun.Device
+	createdDevice *device.Device
+	uapiListen    net.Listener
 }
 
 func NewWGServer(endpointAddressPort string, cidr string, logger *device.Logger, errs chan error) *WGServer {
@@ -82,15 +85,15 @@ func (s *WGServer) createDevice() (string, tun.Device, *device.Device) {
 
 	s.logger.Verbosef("Device started")
 
-	uapi, err := ipc.UAPIListen(interfaceName, fileUAPI)
+	uapiListen, err := ipc.UAPIListen(interfaceName, fileUAPI)
 	if err != nil {
-		s.logger.Errorf("Failed to listen on uapi socket: %v", err)
+		s.logger.Errorf("Failed to listen on uapiListen socket: %v", err)
 		s.errs <- err
 	}
 
 	go func() {
 		for {
-			createdConn, err := uapi.Accept()
+			createdConn, err := uapiListen.Accept()
 			if err != nil {
 				s.errs <- err
 				return
@@ -100,6 +103,9 @@ func (s *WGServer) createDevice() (string, tun.Device, *device.Device) {
 	}()
 
 	s.logger.Verbosef("UAPI listener started")
+	s.createdTun = createdTun
+	s.createdDevice = createdDevice
+	s.uapiListen = uapiListen
 	return interfaceName, createdTun, createdDevice
 }
 
@@ -179,7 +185,7 @@ func (s *WGServer) AddClientPeer() []byte {
 				},
 			}},
 		Address: []net.IPNet{{IP: clientIP,
-			Mask: s.pool.CurrentIPMask()}},
+			Mask: net.CIDRMask(32, 32)}},
 	}
 	configs, err := wgQuickConfig.MarshalText()
 	s.logger.Verbosef("wgQuickConfig\n%s\n", configs)
@@ -207,6 +213,13 @@ func (s *WGServer) configureServerIP() {
 		s.errs <- err
 	}
 	s.logger.Verbosef("%s\n", stdoutStderr)
+
+}
+
+func (s *WGServer) StopServer() {
+	_ = s.uapiListen.Close()
+	_ = s.createdTun.Close()
+	s.createdDevice.Close()
 }
 
 func checkIsRoot(logger *device.Logger) (bool, error) {
