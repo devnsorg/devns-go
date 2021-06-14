@@ -2,7 +2,6 @@ package mywgserver
 
 import (
 	"errors"
-	"fmt"
 	"github.com/ipTLS/ipTLS/wgapi/util"
 	"golang.zx2c4.com/wireguard/conn"
 	"golang.zx2c4.com/wireguard/device"
@@ -13,7 +12,6 @@ import (
 	"net"
 	"os/exec"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -190,30 +188,6 @@ func (s *WGServer) AddClientPeer() []byte {
 	configs, err := wgQuickConfig.MarshalText()
 	s.logger.Verbosef("wgQuickConfig\n%s\n", configs)
 	return configs
-}
-
-func (s *WGServer) configureServerIP() {
-	serverIP := s.pool.GetStartingIP()
-	serverIPNet := net.IPNet{
-		IP:   serverIP,
-		Mask: s.pool.CurrentIPMask(),
-	}
-	ifconfig := exec.Command("ifconfig", strings.Split(fmt.Sprintf("%s inet %s %s alias", s.iface, serverIPNet.String(), serverIP.String()), " ")...)
-	stdoutStderr, err := ifconfig.CombinedOutput()
-	if err != nil {
-		s.logger.Errorf("ERROR %#v", err)
-		s.errs <- err
-	}
-	s.logger.Verbosef("%s\n", stdoutStderr)
-
-	route := exec.Command("route", strings.Split(fmt.Sprintf("-q -n add -inet %s -interface %s", serverIPNet.String(), s.iface), " ")...)
-	stdoutStderr, err = route.CombinedOutput()
-	if err != nil {
-		s.logger.Errorf("ERROR %#v", err)
-		s.errs <- err
-	}
-	s.logger.Verbosef("%s\n", stdoutStderr)
-
 }
 
 func (s *WGServer) StopServer() {
