@@ -14,6 +14,7 @@ import (
 
 var portF = flag.Int("port", 8888, "Port for DNS server to listen to")
 var rootDomainF = flag.String("domain", "example.com", "[MUST CHANGE] Base domain for DNS resolution")
+var wgEndpointF = flag.String("wg-endpoint", "192.168.0.11:51820", "[MUST CHANGE] Base domain for DNS resolution")
 var helpF = flag.Bool("h", false, "Print this help")
 
 func main() {
@@ -49,7 +50,7 @@ func main() {
 			os.Exit(2)
 		}
 	}()
-	wgServer = mywgserver.NewWGServer("192.168.1.124:51820", "10.44.0.1/23", logger, errsChan)
+	wgServer = mywgserver.NewWGServer(*wgEndpointF, "10.44.0.1/23", logger, errsChan)
 	wgChan := wgServer.StartServer()
 	logger.Verbosef("WG STARTED")
 	httpServer := myhttpserver.NewHTTPServer(9999, wgServer, logger, errsChan)
