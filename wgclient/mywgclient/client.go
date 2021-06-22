@@ -12,6 +12,7 @@ import (
 	"net"
 	"os/exec"
 	"strconv"
+	"time"
 )
 
 type WGClient struct {
@@ -47,8 +48,25 @@ func (s *WGClient) StartServer() chan struct{} {
 	s.iface = iface
 	s.configureDevice()
 	s.configureServerIP()
+	go s.cleanUpStalePeers()
 
 	return createdDevice.Wait()
+}
+
+func (s *WGClient) cleanUpStalePeers() {
+	_, d := getUapi(s.iface, s.logger, s.errs)
+	for range time.Tick(time.Second * 1) {
+		for _, peer := range d.Peers {
+			if peer.LastHandshakeTime.IsZero() {
+				//TODO: May need to keep track and remove later
+			} else if peer.LastHandshakeTime.Add(2 * *s.wgQuickConfig.Peers[0].PersistentKeepaliveInterval).Before(time.Now()) {
+				// If 2xDURATION passed, delete peer
+				err := errors.New("2xDURATION passed, delete peer")
+				s.logger.Errorf("REMOVE PEER ConfigureDevice %#v", err)
+				s.errs <- err
+			}
+		}
+	}
 }
 
 func (s *WGClient) createDevice() (string, tun.Device, *device.Device) {
