@@ -7,10 +7,10 @@ Support local development with proper DNS resolution for IP address
 - [x] Resolve IP domain into IP
   ```
   # HOSTS
-  1-2-3-4.iptls.com 1.2.3.4
-  2400-cb00-2049-1--a29f-1804.iptls.com 2400:cb00:2049:1::a29f:1804 
-  localhost.iptls.com 127.0.0.1
-  localhost.iptls.com ::1 
+  1-2-3-4.devns.net 1.2.3.4
+  2400-cb00-2049-1--a29f-1804.devns.net 2400:cb00:2049:1::a29f:1804 
+  localhost.devns.net 127.0.0.1
+  localhost.devns.net ::1 
   ```
  
 - [ ] Metrics

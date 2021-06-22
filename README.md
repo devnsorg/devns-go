@@ -1,4 +1,4 @@
-# ipTLS
+# devns
 
 Support local development
 
@@ -15,17 +15,17 @@ Support local development
 - [x] Resolve IP domain into IP using `dnsserver` module
   ```
   # HOSTS
-  1-2-3-4.iptls.com 1.2.3.4
-  2400-cb00-2049-1--a29f-1804.iptls.com 2400:cb00:2049:1::a29f:1804 
-  localhost.iptls.com 127.0.0.1
-  localhost.iptls.com ::1 
+  1-2-3-4.devns.net 1.2.3.4
+  2400-cb00-2049-1--a29f-1804.devns.net 2400:cb00:2049:1::a29f:1804 
+  localhost.devns.net 127.0.0.1
+  localhost.devns.net ::1 
   ```
 
 - [x] Support TLS for all subdomains using `tlsapi` module (requires your server to serve with our certificate) 
   ```  
-  https://1-2-3-4.iptls.com
-  https://2400-cb00-2049-1--a29f-1804.iptls.com      
-  https://localhost.iptls.com
+  https://1-2-3-4.devns.net
+  https://2400-cb00-2049-1--a29f-1804.devns.net      
+  https://localhost.devns.net
   ```
   
 - [ ] Support tunneling using Wireguard

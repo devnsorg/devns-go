@@ -11,9 +11,9 @@ Support local development with proper HTTPS configuration without dealing with m
 
 - [x] Support TLS for all subdomains (requires your server to serve with our certificate) 
   ```  
-  https://1-2-3-4.iptls.com
-  https://2400-cb00-2049-1--a29f-1804.iptls.com      
-  https://localhost.iptls.com
+  https://1-2-3-4.devns.net
+  https://2400-cb00-2049-1--a29f-1804.devns.net      
+  https://localhost.devns.net
   ```
 
 - [ ] Auto-renew certificate (let's encrypt only provides 3-months certificate)
