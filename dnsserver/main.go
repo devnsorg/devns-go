@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"github.com/ipTLS/ipTLS/dnsserver/mydns"
+	"github.com/devnsorg/devns-go/dnsserver/mydns"
 	"github.com/miekg/dns"
 	"log"
 	"os"

@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/ipTLS/ipTLS/wgclient/mywgclient"
+	"github.com/devnsorg/devns-go/wgclient/mywgclient"
 	"github.com/mdp/qrterminal/v3"
 	"golang.zx2c4.com/wireguard/device"
 	"io/ioutil"

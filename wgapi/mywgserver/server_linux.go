@@ -4,7 +4,7 @@ package mywgserver
 
 import (
 	"fmt"
-	"github.com/ipTLS/ipTLS/wgapi/util"
+	"github.com/devnsorg/devns-go/wgapi/util"
 	"net"
 )
 

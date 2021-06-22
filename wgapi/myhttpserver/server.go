@@ -2,8 +2,8 @@ package myhttpserver
 
 import (
 	"fmt"
+	"github.com/devnsorg/devns-go/wgapi/mywgserver"
 	"github.com/gorilla/mux"
-	"github.com/ipTLS/ipTLS/wgapi/mywgserver"
 	"golang.zx2c4.com/wireguard/device"
 	"net/http"
 )

@@ -1,4 +1,4 @@
-module github.com/ipTLS/ipTLS/tlsapi
+module github.com/devnsorg/devns-go/tlsapi
 
 go 1.16
 

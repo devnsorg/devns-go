@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"github.com/ipTLS/ipTLS/tlsapi/myhttpserver"
+	"github.com/devnsorg/devns-go/tlsapi/myhttpserver"
 	"log"
 	"os"
 )

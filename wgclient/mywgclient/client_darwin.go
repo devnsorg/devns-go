@@ -4,7 +4,7 @@ package mywgclient
 
 import (
 	"fmt"
-	"github.com/ipTLS/ipTLS/wgclient/util"
+	"github.com/devnsorg/devns-go/wgclient/util"
 	"net"
 )
 

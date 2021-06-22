@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/ipTLS/ipTLS/wgapi/myhttpserver"
-	"github.com/ipTLS/ipTLS/wgapi/mywgserver"
+	"github.com/devnsorg/devns-go/wgapi/myhttpserver"
+	"github.com/devnsorg/devns-go/wgapi/mywgserver"
 	"golang.zx2c4.com/wireguard/device"
 	"log"
 	"os"

@@ -2,7 +2,7 @@ package mywgclient
 
 import (
 	"errors"
-	"github.com/ipTLS/ipTLS/wgclient/util"
+	"github.com/devnsorg/devns-go/wgclient/util"
 	"golang.zx2c4.com/wireguard/conn"
 	"golang.zx2c4.com/wireguard/device"
 	"golang.zx2c4.com/wireguard/ipc"

@@ -1,4 +1,4 @@
-module github.com/ipTLS/ipTLS/wgapi
+module github.com/devnsorg/devns-go/wgapi
 
 go 1.16
 
