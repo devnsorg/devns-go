@@ -5,8 +5,8 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"github.com/devnsorg/devns-go/tlsapi/util"
 	"github.com/go-acme/lego/v4/registration"
-	"github.com/ipTLS/dnsserver/util"
 	"log"
 )
 
