@@ -59,6 +59,7 @@ func (s *WGServer) StartServer() chan struct{} {
 }
 
 var subdomains = make(map[string]*util.WgQuickConfig)
+var subdomainsZeroHandshake = make(map[string]bool)
 
 func (s *WGServer) GetPeerAddressFor(subdomain string) net.IP {
 	return subdomains[subdomain].Address[0].IP
@@ -68,8 +69,19 @@ func (s *WGServer) cleanUpStalePeers() {
 	c, d := getUapi(s.iface, s.logger, s.errs)
 	for range time.Tick(time.Second * 1) {
 		for _, peer := range d.Peers {
-			if peer.LastHandshakeTime.IsZero() {
-				//TODO: May need to keep track and remove later
+			var subdomain = ""
+			for iSubdomain, config := range subdomains {
+				if config.PrivateKey.PublicKey() == peer.PublicKey {
+					s.logger.Verbosef("REMOVE PEER Map %s", iSubdomain)
+					subdomain = iSubdomain
+				}
+			}
+			if len(subdomain) == 0 {
+				s.errs <- errors.New("Map not synced")
+			}
+
+			if peer.LastHandshakeTime.IsZero() && !subdomainsZeroHandshake[subdomain] {
+				subdomainsZeroHandshake[subdomain] = true
 			} else if peer.LastHandshakeTime.Add(2 * s.duration).Before(time.Now()) {
 				// If 2xDURATION passed, delete peer
 				err := c.ConfigureDevice(s.iface, wgtypes.Config{
@@ -84,12 +96,8 @@ func (s *WGServer) cleanUpStalePeers() {
 					s.logger.Errorf("REMOVE PEER ConfigureDevice %#v", err)
 					s.errs <- err
 				}
-				for subdomain, config := range subdomains {
-					if config.PrivateKey.PublicKey() == peer.PublicKey {
-						s.logger.Verbosef("REMOVE PEER Map %s", subdomain)
-						delete(subdomains, subdomain)
-					}
-				}
+				delete(subdomains, subdomain)
+				delete(subdomainsZeroHandshake, subdomain)
 			}
 		}
 	}

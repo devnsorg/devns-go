@@ -16,7 +16,7 @@ import (
 )
 
 var apiEndpoint = flag.String("api-endpoint", "http://localhost:9999/wg", "wg api endpoint")
-var subdomain = flag.String("name", "", "subdomain for NS")
+var subdomain = flag.String("subdomain", "", "subdomain for NS")
 var qrOnly = flag.Bool("qr", false, "Set true if print QR only. Default connect to WG")
 
 var helpF = flag.Bool("h", false, "Print this help")

@@ -1,4 +1,4 @@
-wgEndpoint = 192.168.0.126:51820
+wgEndpoint = 192.168.0.11:51820
 piSSHAddress = pi@192.168.0.126
 
 define build_arch_os

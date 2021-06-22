@@ -1,5 +1,5 @@
-apiEndpoint = http://192.168.0.126:9999/wg
-piSSHAddress = pi@192.168.0.126
+apiEndpoint = http://192.168.0.11:9999/wg
+piSSHAddress = pi@192.168.0.11
 
 define build_arch_os
 	GOARCH=$(1) GOOS=$(2) go build -o "./bin/wgclient-$(1)-$(2)"
@@ -16,7 +16,7 @@ build_darwin:
 	$(call build_arch_os,amd64,darwin)
 deploy_and_test_arm: build_arm
 	scp -r bin/wgclient-arm-linux ${piSSHAddress}:./Downloads/
-	ssh ${piSSHAddress} sudo Downloads/wgclient-arm-linux --api-endpoint ${apiEndpoint}
+	ssh ${piSSHAddress} sudo Downloads/wgclient-arm-linux --subdomain dnsserverclient0 --api-endpoint ${apiEndpoint}
 test_darwin: build_darwin
-	bin/wgclient-amd64-darwin --api-endpoint ${apiEndpoint}
+	bin/wgclient-amd64-darwin --subdomain dnsserverclient0 --api-endpoint ${apiEndpoint}
 all: build

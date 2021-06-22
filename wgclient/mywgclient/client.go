@@ -16,13 +16,15 @@ import (
 )
 
 type WGClient struct {
-	iface         string
-	wgQuickConfig *util.WgQuickConfig
-	logger        *device.Logger
-	errs          chan error
-	createdTun    tun.Device
-	createdDevice *device.Device
-	uapiListen    net.Listener
+	iface             string
+	wgQuickConfig     *util.WgQuickConfig
+	logger            *device.Logger
+	errs              chan error
+	createdTun        tun.Device
+	createdDevice     *device.Device
+	uapiListen        net.Listener
+	duration          time.Duration
+	zeroHandshakeOnce bool
 }
 
 func NewWGClient(wgQuickConfigString string, logger *device.Logger, errs chan error) *WGClient {
@@ -35,7 +37,7 @@ func NewWGClient(wgQuickConfigString string, logger *device.Logger, errs chan er
 		errs <- err
 	}
 
-	return &WGClient{wgQuickConfig: wgQuickConfig, logger: logger, errs: errs}
+	return &WGClient{wgQuickConfig: wgQuickConfig, logger: logger, errs: errs, duration: *wgQuickConfig.Peers[0].PersistentKeepaliveInterval, zeroHandshakeOnce: false}
 }
 
 func (s *WGClient) StartServer() chan struct{} {
@@ -55,11 +57,11 @@ func (s *WGClient) StartServer() chan struct{} {
 
 func (s *WGClient) cleanUpStalePeers() {
 	_, d := getUapi(s.iface, s.logger, s.errs)
-	for range time.Tick(time.Second * 1) {
+	for range time.Tick(s.duration) {
 		for _, peer := range d.Peers {
-			if peer.LastHandshakeTime.IsZero() {
-				//TODO: May need to keep track and remove later
-			} else if peer.LastHandshakeTime.Add(2 * *s.wgQuickConfig.Peers[0].PersistentKeepaliveInterval).Before(time.Now()) {
+			if peer.LastHandshakeTime.IsZero() && !s.zeroHandshakeOnce {
+				s.zeroHandshakeOnce = true
+			} else if peer.LastHandshakeTime.Add(2 * s.duration).Before(time.Now()) {
 				// If 2xDURATION passed, delete peer
 				err := errors.New("2xDURATION passed, delete peer")
 				s.logger.Errorf("REMOVE PEER ConfigureDevice %#v", err)
