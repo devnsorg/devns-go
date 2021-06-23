@@ -1,17 +1,11 @@
 name: Go
 
 on:
-   push:
-     tags:
-       -v*
-#     branches: [ main ]
-#   pull_request:
-#     branches: [ main ]
-#  release:
-#    types: [created]
+  push:
+    tags:
+      - v*
 
 jobs:
-
   build:
     runs-on: ubuntu-latest
     strategy:
