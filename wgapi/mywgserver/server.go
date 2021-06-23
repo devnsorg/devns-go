@@ -2,7 +2,7 @@ package mywgserver
 
 import (
 	"errors"
-	"github.com/devnsorg/devns-go/wgapi/util"
+	"github.com/devnsorg/devns-go/util"
 	"golang.zx2c4.com/wireguard/conn"
 	"golang.zx2c4.com/wireguard/device"
 	"golang.zx2c4.com/wireguard/ipc"
@@ -39,7 +39,7 @@ func NewWGServer(endpointAddressPort string, cidr string, logger *device.Logger,
 		logger.Errorf("ERROR %#v", err)
 		errs <- err
 	}
-	duration, _ := time.ParseDuration("30s")
+	duration, _ := time.ParseDuration("5s")
 	return &WGServer{endpoint: endpoint,
 		pool: pool, logger: logger, errs: errs, duration: duration}
 }
@@ -54,7 +54,7 @@ func (s *WGServer) StartServer() chan struct{} {
 	s.iface = iface
 	s.configureDevice()
 	s.configureServerIP()
-	go s.cleanUpStalePeers()
+	//go s.cleanUpStalePeers()
 	return createdDevice.Wait()
 }
 
@@ -66,8 +66,8 @@ func (s *WGServer) GetPeerAddressFor(subdomain string) net.IP {
 }
 
 func (s *WGServer) cleanUpStalePeers() {
-	c, d := getUapi(s.iface, s.logger, s.errs)
-	for range time.Tick(time.Second * 1) {
+	for range time.Tick(s.duration * 2) {
+		c, d := getUapi(s.iface, s.logger, s.errs)
 		for _, peer := range d.Peers {
 			var subdomain = ""
 			for iSubdomain, config := range subdomains {
@@ -193,8 +193,8 @@ func (s *WGServer) AddClientPeer(subdomain string) []byte {
 				PublicKey:                   peerKey.PublicKey(),
 				Remove:                      false,
 				UpdateOnly:                  false,
-				PersistentKeepaliveInterval: &s.duration,
 				ReplaceAllowedIPs:           true,
+				PersistentKeepaliveInterval: &s.duration,
 				AllowedIPs: []net.IPNet{{
 					IP:   clientIP,
 					Mask: s.pool.CurrentIPMask(),
@@ -230,7 +230,7 @@ func (s *WGServer) AddClientPeer(subdomain string) []byte {
 		Address: []net.IPNet{{IP: clientIP,
 			Mask: net.CIDRMask(32, 32)}},
 	}
-	subdomains[subdomain] = &wgQuickConfig
+
 	configs, err := wgQuickConfig.MarshalText()
 	s.logger.Verbosef("wgQuickConfig\n%s\n", configs)
 	configString, _ := wgQuickConfig.MarshalText()

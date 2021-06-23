@@ -23,7 +23,7 @@ var helpF = flag.Bool("h", false, "Print this help")
 
 func main() {
 
-	log.SetFlags(log.Lshortfile)
+	log.SetFlags(log.Lshortfile | log.Ltime)
 	flag.Parse()
 
 	logger := &device.Logger{
