@@ -20,6 +20,7 @@ jobs:
     - name: Build
       env:
         MODULE: ${{ matrix.module }}
+        version: ${{ github.event.release.tag_name }}
       working-directory: ./${{ matrix.module }}
       run: make release
     - name: GH Release
