@@ -20,9 +20,8 @@ jobs:
     - name: Build
       env:
         MODULE: ${{ matrix.module }}
-        version: ${{ github.event.release.tag_name }}
       working-directory: ./${{ matrix.module }}
-      run: make release
+      run: version=${GITHUB_REF:10} make release
     - name: GH Release
       # You may pin to the exact commit or the version.
       # uses: softprops/action-gh-release@b7e450da2a4b4cb4bfbae528f788167786cfcedf
