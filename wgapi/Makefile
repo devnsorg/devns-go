@@ -1,10 +1,13 @@
 wgEndpoint = localhost:51820
 piSSHAddress = pi@192.168.0.126
 version ?= 0.0.0
+module=wgapi
+outfile = "./bin/$(module)-$(1)-$(2)-$(version)"
+test_opts=--wg-endpoint ${wgEndpoint}
 
 define build_arch_os
-	GOARCH=$(1) GOOS=$(2) go build -o "./bin/wgapi-$(1)-$(2)-$(version)"
-	chmod a+x "./bin/wgapi-$(1)-$(2)"
+	GOARCH=$(1) GOOS=$(2) go build -o "$(outfile)"
+	chmod a+x "$(outfile)"
 endef
 
 build: build_linux build_darwin build_arm
@@ -16,8 +19,8 @@ build_linux:
 build_darwin:
 	$(call build_arch_os,amd64,darwin)
 test_arm: build_arm
-	scp -r bin/wgapi-arm-linux ${piSSHAddress}:./Downloads/
-	ssh ${piSSHAddress} sudo Downloads/wgapi-arm-linux --wg-endpoint ${wgEndpoint}
+	scp -r "$(outfile)" ${piSSHAddress}:./Downloads/
+	ssh ${piSSHAddress} sudo Downloads/"$(outfile)" ${test_opts}
 test_darwin: build_darwin
-	bin/wgapi-amd64-darwin --wg-endpoint ${wgEndpoint}
+	"$(outfile)" ${test_opts}
 release: build
