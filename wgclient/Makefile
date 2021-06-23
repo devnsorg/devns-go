@@ -2,7 +2,7 @@ wgEndpoint = localhost:51820
 piSSHAddress = pi@192.168.0.126
 version ?= 0.0.0
 module=wgclient
-outfile ="./bin/$(module)-$(1)-$(2)-$(version)"
+outfile=./bin/$(module)-$(1)-$(2)-$(version)
 test_opts=--subdomain dnsserverclient0 --api-endpoint ${apiEndpoint}
 
 define build_arch_os

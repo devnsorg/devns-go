@@ -1,7 +1,7 @@
 piSSHAddress ?= pi@192.168.0.126
 version ?= 0.0.0
 module=dnsserver
-outfile = "./bin/$(module)-$(1)-$(2)-$(version)"
+outfile=./bin/$(module)-$(1)-$(2)-$(version)
 test_opts=
 
 define build_arch_os
