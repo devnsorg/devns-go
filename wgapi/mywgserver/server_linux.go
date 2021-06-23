@@ -10,13 +10,13 @@ import (
 
 func (s *WGServer) configureServerIP() {
 	serverIPNet := net.IPNet{
-		IP:   s.pool.GetStartingIP(),
-		Mask: s.pool.CurrentIPMask(),
+		IP:   s.ipPool.GetStartingIP(),
+		Mask: s.ipPool.CurrentIPMask(),
 	}
 
 	allowedIPNet := net.IPNet{
-		IP:   s.pool.GetStartingIP().Mask(s.pool.CurrentIPMask()),
-		Mask: s.pool.CurrentIPMask(),
+		IP:   s.ipPool.GetStartingIP().Mask(s.ipPool.CurrentIPMask()),
+		Mask: s.ipPool.CurrentIPMask(),
 	}
 
 	fmt.Printf("serverIPNet %s allowedIPNet %s", serverIPNet, allowedIPNet)

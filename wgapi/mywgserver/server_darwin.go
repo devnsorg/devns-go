@@ -9,10 +9,10 @@ import (
 )
 
 func (s *WGServer) configureServerIP() {
-	serverIP := s.pool.GetStartingIP()
+	serverIP := s.ipPool.GetStartingIP()
 	serverIPNet := net.IPNet{
 		IP:   serverIP,
-		Mask: s.pool.CurrentIPMask(),
+		Mask: s.ipPool.CurrentIPMask(),
 	}
 	_, _ = util.ExecCommand(fmt.Sprintf("ifconfig %s inet %s %s alias", s.iface, serverIPNet.String(), serverIP.String()), s.logger)
 	_, _ = util.ExecCommand(fmt.Sprintf("route -q -n add -inet %s -interface %s", serverIPNet.String(), s.iface), s.logger)

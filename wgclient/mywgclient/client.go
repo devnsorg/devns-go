@@ -7,7 +7,6 @@ import (
 	"golang.zx2c4.com/wireguard/device"
 	"golang.zx2c4.com/wireguard/ipc"
 	"golang.zx2c4.com/wireguard/tun"
-	"golang.zx2c4.com/wireguard/wgctrl"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"net"
 	"os/exec"
@@ -16,15 +15,15 @@ import (
 )
 
 type WGClient struct {
-	iface             string
-	wgQuickConfig     *util.WgQuickConfig
-	logger            *device.Logger
-	errs              chan error
-	createdTun        tun.Device
-	createdDevice     *device.Device
-	uapiListen        net.Listener
-	duration          time.Duration
-	zeroHandshakeOnce bool
+	iface         string
+	wgQuickConfig *util.WgQuickConfig
+	logger        *device.Logger
+	errs          chan error
+	createdTun    tun.Device
+	createdDevice *device.Device
+	uapiListen    net.Listener
+	duration      time.Duration
+	wgPool        *util.WGPool
 }
 
 func NewWGClient(wgQuickConfigString string, logger *device.Logger, errs chan error) *WGClient {
@@ -37,7 +36,7 @@ func NewWGClient(wgQuickConfigString string, logger *device.Logger, errs chan er
 		errs <- err
 	}
 
-	return &WGClient{wgQuickConfig: wgQuickConfig, logger: logger, errs: errs, duration: *wgQuickConfig.Peers[0].PersistentKeepaliveInterval, zeroHandshakeOnce: false}
+	return &WGClient{wgQuickConfig: wgQuickConfig, logger: logger, errs: errs, duration: *wgQuickConfig.Peers[0].PersistentKeepaliveInterval}
 }
 
 func (s *WGClient) StartServer() chan struct{} {
@@ -50,25 +49,15 @@ func (s *WGClient) StartServer() chan struct{} {
 	s.iface = iface
 	s.configureDevice()
 	s.configureServerIP()
-	go s.cleanUpStalePeers()
+	s.wgPool = util.NewWGPool(iface, s.logger, s.errs)
+	go s.wgPool.CleanUpStalePeers(s.duration, func(poolPeer *util.WGPoolPeer) {
+		err := errors.New("error due to inactivity from peer")
+		s.logger.Errorf("CleanUpStalePeers %#v", err)
+		s.errs <- err
+	})
+	s.wgPool.AddPoolPeerByPubKey(s.wgQuickConfig.Peers[0].PublicKey)
 
 	return createdDevice.Wait()
-}
-
-func (s *WGClient) cleanUpStalePeers() {
-	_, d := getUapi(s.iface, s.logger, s.errs)
-	for range time.Tick(s.duration) {
-		for _, peer := range d.Peers {
-			if peer.LastHandshakeTime.IsZero() && !s.zeroHandshakeOnce {
-				s.zeroHandshakeOnce = true
-			} else if peer.LastHandshakeTime.Add(2 * s.duration).Before(time.Now()) {
-				// If 2xDURATION passed, delete peer
-				err := errors.New("2xDURATION passed, delete peer")
-				s.logger.Errorf("REMOVE PEER ConfigureDevice %#v", err)
-				s.errs <- err
-			}
-		}
-	}
 }
 
 func (s *WGClient) createDevice() (string, tun.Device, *device.Device) {
@@ -123,7 +112,7 @@ func (s *WGClient) createDevice() (string, tun.Device, *device.Device) {
 
 func (s *WGClient) configureDevice() {
 	var err error
-	c, _ := getUapi(s.iface, s.logger, s.errs)
+	c, _ := util.GetUapi(s.iface, s.logger, s.errs)
 
 	pk := s.wgQuickConfig.PrivateKey
 
@@ -166,31 +155,4 @@ func checkIsRoot(logger *device.Logger) (bool, error) {
 	} else {
 		return true, err
 	}
-}
-
-func getUapi(iface string, logger *device.Logger, errs chan error) (*wgctrl.Client, *wgtypes.Device) {
-	uapiClient, err := wgctrl.New()
-	if err != nil {
-		logger.Errorf("wgctrl error: %v", err)
-		errs <- err
-	}
-	devices, err := uapiClient.Devices()
-	if err != nil {
-		logger.Errorf("wgctrl get Devices error: %v", err)
-		errs <- err
-	}
-
-	var uapiDevice *wgtypes.Device
-	for _, iDevice := range devices {
-		if iDevice.Name == iface {
-			uapiDevice = iDevice
-		}
-	}
-
-	if uapiDevice == nil {
-		err = errors.New("device not found")
-		errs <- err
-		return nil, nil
-	}
-	return uapiClient, uapiDevice
 }

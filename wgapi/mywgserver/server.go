@@ -7,7 +7,6 @@ import (
 	"golang.zx2c4.com/wireguard/device"
 	"golang.zx2c4.com/wireguard/ipc"
 	"golang.zx2c4.com/wireguard/tun"
-	"golang.zx2c4.com/wireguard/wgctrl"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"net"
 	"os/exec"
@@ -17,7 +16,7 @@ import (
 
 type WGServer struct {
 	endpoint      *net.UDPAddr
-	pool          *util.IPPool
+	ipPool        *util.IPPool
 	logger        *device.Logger
 	errs          chan error
 	iface         string
@@ -25,6 +24,7 @@ type WGServer struct {
 	createdDevice *device.Device
 	uapiListen    net.Listener
 	duration      time.Duration
+	wgPool        *util.WGPool
 }
 
 func NewWGServer(endpointAddressPort string, cidr string, logger *device.Logger, errs chan error) *WGServer {
@@ -40,8 +40,13 @@ func NewWGServer(endpointAddressPort string, cidr string, logger *device.Logger,
 		errs <- err
 	}
 	duration, _ := time.ParseDuration("5s")
-	return &WGServer{endpoint: endpoint,
-		pool: pool, logger: logger, errs: errs, duration: duration}
+	return &WGServer{
+		endpoint: endpoint,
+		ipPool:   pool,
+		logger:   logger,
+		errs:     errs,
+		duration: duration,
+	}
 }
 
 func (s *WGServer) StartServer() chan struct{} {
@@ -54,53 +59,25 @@ func (s *WGServer) StartServer() chan struct{} {
 	s.iface = iface
 	s.configureDevice()
 	s.configureServerIP()
-	//go s.cleanUpStalePeers()
-	return createdDevice.Wait()
-}
-
-var subdomains = make(map[string]*util.WgQuickConfig)
-var subdomainsZeroHandshake = make(map[string]bool)
-
-func (s *WGServer) GetPeerAddressFor(subdomain string) net.IP {
-	return subdomains[subdomain].Address[0].IP
-}
-
-func (s *WGServer) cleanUpStalePeers() {
-	for range time.Tick(s.duration * 2) {
-		c, d := getUapi(s.iface, s.logger, s.errs)
-		for _, peer := range d.Peers {
-			var subdomain = ""
-			for iSubdomain, config := range subdomains {
-				if config.PrivateKey.PublicKey() == peer.PublicKey {
-					s.logger.Verbosef("REMOVE PEER Map %s", iSubdomain)
-					subdomain = iSubdomain
-				}
-			}
-			if len(subdomain) == 0 {
-				s.errs <- errors.New("Map not synced")
-			}
-
-			if peer.LastHandshakeTime.IsZero() && !subdomainsZeroHandshake[subdomain] {
-				subdomainsZeroHandshake[subdomain] = true
-			} else if peer.LastHandshakeTime.Add(2 * s.duration).Before(time.Now()) {
-				// If 2xDURATION passed, delete peer
-				err := c.ConfigureDevice(s.iface, wgtypes.Config{
-					ReplacePeers: false,
-					Peers: []wgtypes.PeerConfig{{
-						PublicKey:  peer.PublicKey,
-						Remove:     true,
-						UpdateOnly: true,
-					}},
-				})
-				if err != nil {
-					s.logger.Errorf("REMOVE PEER ConfigureDevice %#v", err)
-					s.errs <- err
-				}
-				delete(subdomains, subdomain)
-				delete(subdomainsZeroHandshake, subdomain)
-			}
+	s.wgPool = util.NewWGPool(iface, s.logger, s.errs)
+	go s.wgPool.CleanUpStalePeers(s.duration, func(poolPeer *util.WGPoolPeer) {
+		c, _ := util.GetUapi(s.iface, s.logger, s.errs)
+		err := c.ConfigureDevice(iface, wgtypes.Config{
+			ReplacePeers: false,
+			Peers: []wgtypes.PeerConfig{{
+				PublicKey:  poolPeer.PublicKey(),
+				Remove:     true,
+				UpdateOnly: true,
+			}},
+		})
+		if err != nil {
+			s.logger.Errorf("CleanUpStalePeers %#v %#v", poolPeer, err)
+			s.errs <- err
 		}
-	}
+
+	})
+
+	return createdDevice.Wait()
 }
 
 func (s *WGServer) createDevice() (string, tun.Device, *device.Device) {
@@ -154,7 +131,7 @@ func (s *WGServer) createDevice() (string, tun.Device, *device.Device) {
 }
 
 func (s *WGServer) configureDevice() {
-	c, _ := getUapi(s.iface, s.logger, s.errs)
+	c, _ := util.GetUapi(s.iface, s.logger, s.errs)
 
 	pk, err := wgtypes.GeneratePrivateKey()
 
@@ -176,12 +153,12 @@ func (s *WGServer) configureDevice() {
 
 func (s *WGServer) AddClientPeer(subdomain string) []byte {
 	var err error
-	c, d := getUapi(s.iface, s.logger, s.errs)
+	c, d := util.GetUapi(s.iface, s.logger, s.errs)
 
-	serverIP := s.pool.GetStartingIP()
-	clientIP, err := s.pool.Next(s.logger)
+	serverIP := s.ipPool.GetStartingIP()
+	clientIP, err := s.ipPool.Next(s.logger)
 	if err != nil {
-		s.logger.Errorf("pool.Next error: %v", err)
+		s.logger.Errorf("ipPool.Next error: %v", err)
 		s.errs <- err
 	}
 
@@ -197,7 +174,7 @@ func (s *WGServer) AddClientPeer(subdomain string) []byte {
 				PersistentKeepaliveInterval: &s.duration,
 				AllowedIPs: []net.IPNet{{
 					IP:   clientIP,
-					Mask: s.pool.CurrentIPMask(),
+					Mask: s.ipPool.CurrentIPMask(),
 				}},
 			}},
 	})
@@ -223,7 +200,7 @@ func (s *WGServer) AddClientPeer(subdomain string) []byte {
 					ReplaceAllowedIPs:           true,
 					AllowedIPs: []net.IPNet{{
 						IP:   serverIP,
-						Mask: s.pool.CurrentIPMask(),
+						Mask: s.ipPool.CurrentIPMask(),
 					}},
 				},
 			}},
@@ -234,6 +211,9 @@ func (s *WGServer) AddClientPeer(subdomain string) []byte {
 	configs, err := wgQuickConfig.MarshalText()
 	s.logger.Verbosef("wgQuickConfig\n%s\n", configs)
 	configString, _ := wgQuickConfig.MarshalText()
+
+	s.wgPool.AddPoolPeer(subdomain, peerKey.PublicKey(), clientIP)
+
 	return configString
 }
 
@@ -241,6 +221,10 @@ func (s *WGServer) StopServer() {
 	_ = s.uapiListen.Close()
 	_ = s.createdTun.Close()
 	s.createdDevice.Close()
+}
+
+func (s *WGServer) GetPeerAddressFor(subdomain string) net.IP {
+	return s.wgPool.GetPeerAddressBySubdomain(subdomain)
 }
 
 func checkIsRoot(logger *device.Logger) (bool, error) {
@@ -263,31 +247,4 @@ func checkIsRoot(logger *device.Logger) (bool, error) {
 	} else {
 		return true, err
 	}
-}
-
-func getUapi(iface string, logger *device.Logger, errs chan error) (*wgctrl.Client, *wgtypes.Device) {
-	uapiClient, err := wgctrl.New()
-	if err != nil {
-		logger.Errorf("wgctrl error: %v", err)
-		errs <- err
-	}
-	devices, err := uapiClient.Devices()
-	if err != nil {
-		logger.Errorf("wgctrl get Devices error: %v", err)
-		errs <- err
-	}
-
-	var uapiDevice *wgtypes.Device
-	for _, iDevice := range devices {
-		if iDevice.Name == iface {
-			uapiDevice = iDevice
-		}
-	}
-
-	if uapiDevice == nil {
-		err = errors.New("device not found")
-		errs <- err
-		return nil, nil
-	}
-	return uapiClient, uapiDevice
 }
