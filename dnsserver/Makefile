@@ -3,7 +3,7 @@ piSSHAddress = pi@192.168.0.126
 version ?= 0.0.0
 
 define build_arch_os
-	GOARCH=$(1) GOOS=$(2) go build -o "./bin/wgapi-$(1)-$(2)-$(version)"
+	GOARCH=$(1) GOOS=$(2) go build -o "./bin/dnsserver-$(1)-$(2)-$(version)"
 	chmod a+x "./bin/wgapi-$(1)-$(2)"
 endef
 
