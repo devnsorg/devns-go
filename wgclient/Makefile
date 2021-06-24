@@ -3,11 +3,17 @@ piSSHAddress = pi@192.168.0.126
 version ?= 0.0.0
 module=wgclient
 outfile=./bin/$(module)-$(1)-$(2)-$(version)
-test_opts=--subdomain dnsserverclient0 --api-endpoint ${apiEndpoint}
+test_opts?=--subdomain dnsserverclient0 --api-endpoint ${apiEndpoint}
 
 define build_arch_os
 	GOARCH=$(1) GOOS=$(2) go build -o "$(outfile)"
 	chmod a+x "$(outfile)"
+endef
+
+define build_arch_os_and_run
+	GOARCH=$(1) GOOS=$(2) go build -o "$(outfile)"
+	chmod a+x "$(outfile)"
+	"$(outfile)" ${test_opts}
 endef
 
 build: build_linux build_darwin build_arm
@@ -22,5 +28,5 @@ test_arm: build_arm
 	scp -r "$(outfile)" ${piSSHAddress}:./Downloads/
 	ssh ${piSSHAddress} sudo Downloads/"$(outfile)" ${test_opts}
 test_darwin: build_darwin
-	"$(outfile)" ${test_opts}
+	$(call build_arch_os_and_run,amd64,darwin)
 release: build
