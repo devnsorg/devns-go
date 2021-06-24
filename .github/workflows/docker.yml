@@ -2,8 +2,8 @@ name: docker
 
 on:
   push:
-    branches:
-      - 'main'
+    tags:
+      - v*
 
 jobs:
   docker:
@@ -30,14 +30,11 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-#          tags: |
-#            devnsorg/devns-go:${{ matrix.module }}-${GITHUB_REF:10}
-#            devnsorg/devns-go:${{ matrix.module }}
           tags: |
             devnsorg/devns-go:${{ matrix.module }}
           build-args: |
             MODULE=${{ matrix.module }}
-            VERSION=docker
+            VERSION=${{ GITHUB_REF:10 }}
       -
         name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
