@@ -8,6 +8,10 @@ on:
 jobs:
   docker:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        module: [wgapi]
+#        module: [tlsapi, dnsserver, wgapi, wgclient]
     steps:
       -
         name: Checkout
@@ -15,22 +19,24 @@ jobs:
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
-#      -
-#        name: Login to DockerHub
-#        uses: docker/login-action@v1
-#        with:
-#          username: ${{ secrets.DOCKERHUB_USERNAME }}
-#          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      -
+        name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
         name: Build and push
         id: docker_build
         uses: docker/build-push-action@v2
         with:
-          push: false
-          tags: user/app:latest
+          push: true
+          tags: |
+#            devnsorg/devns-go:${{ matrix.module }}-${GITHUB_REF:10}
+            devnsorg/devns-go:${{ matrix.module }}
           build-args: |
-            MODULE=wgapi
-            VERSION=0.0.1
+            MODULE=${{ matrix.module }}
+            VERSION=0.0.0
       -
         name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
