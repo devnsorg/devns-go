@@ -16,15 +16,17 @@ WORKDIR /app/$MODULE/
 RUN go mod download
 
 ADD ./ /app
-RUN make build_linux
+RUN version=$VERSION make build_linux
 
 RUN ls /app/$MODULE/bin/*
 
 FROM alpine
 RUN mkdir /app
 WORKDIR /app
+
 ARG MODULE=mustset
 ARG VERSION=0.0.0
+
 COPY --from=BUILD /app/$MODULE/bin/ /app/
 RUN ls
 RUN chmod a+x *
