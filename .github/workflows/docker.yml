@@ -10,8 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        module: [wgapi]
-#        module: [tlsapi, dnsserver, wgapi, wgclient]
+        module: [tlsapi, dnsserver, wgapi]
     steps:
       -
         name: Checkout
@@ -38,7 +37,7 @@ jobs:
             devnsorg/devns-go:${{ matrix.module }}
           build-args: |
             MODULE=${{ matrix.module }}
-            VERSION=0.0.0
+            VERSION=docker
       -
         name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
