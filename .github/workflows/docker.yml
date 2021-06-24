@@ -34,7 +34,7 @@ jobs:
             devnsorg/devns-go:${{ matrix.module }}
           build-args: |
             MODULE=${{ matrix.module }}
-            VERSION=${{ GITHUB_REF:10 }}
+            VERSION=${ GITHUB_REF:10 }
       -
         name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
