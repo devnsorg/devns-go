@@ -22,9 +22,13 @@ var qrOnly = flag.Bool("qr", false, "Set true if print QR only. Default connect 
 var helpF = flag.Bool("h", false, "Print this help")
 
 func main() {
-
 	log.SetFlags(log.Lshortfile | log.Ltime)
 	flag.Parse()
+
+	if *helpF || len(os.Args[1:]) == 0 {
+		flag.Usage()
+		return
+	}
 
 	logger := &device.Logger{
 		Verbosef: func(format string, args ...interface{}) {
