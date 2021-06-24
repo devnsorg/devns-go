@@ -1,0 +1,17 @@
+{{- $fullName := include "devns.fullname" . -}}
+{{- $fullName = printf "%s-%s" $fullName "dnsserver-dns" -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- include "devns.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.devns.dnsserver.service.type }}
+  ports:
+    - port: {{ .Values.devns.dnsserver.service.port }}
+      targetPort: dnsserver-dns
+      protocol: UDP
+      name: dns
+  selector:
+    {{- include "devns.selectorLabels" . | nindent 4 }}

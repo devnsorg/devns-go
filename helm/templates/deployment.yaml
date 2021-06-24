@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "devns.fullname" . }}
+  labels:
+    {{- include "devns.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "devns.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "devns.selectorLabels" . | nindent 8 }}
+    spec:
+      volumes:
+        - name: tun
+          hostPath:
+            path: /dev/net/tun
+            type: CharDevice
+      containers:
+        - name: {{ .Chart.Name }}-dnsserver
+          image: "devnsorg/devns-go:dnsserver"
+          imagePullPolicy: Always
+          args:
+            - --port
+            - "53"
+            - --api-endpoint
+            - http://{{ include "devns.fullname" . }}-wgapi-http:{{ .Values.devns.wgapi.service.http.port }}/dns
+            - --domain
+            - {{.Values.devns.dnsserver.domain}}
+            - --nameserver
+            - {{.Values.devns.dnsserver.nameserver}}
+            - --soa-email
+            - {{.Values.devns.dnsserver.soaEmail}}
+          ports:
+            - name: dnsserver-dns
+              containerPort: 53
+              protocol: UDP
+{{/*        - name: {{ .Chart.Name }}-tlsapi*/}}
+{{/*          image: "devnsorg/devns-go:tlsapi"*/}}
+{{/*          imagePullPolicy: Always*/}}
+{{/*          ports:*/}}
+{{/*            - name: tlsapi-http*/}}
+{{/*              containerPort: 8888*/}}
+{{/*              protocol: TCP*/}}
+        - name: {{ .Chart.Name }}-wgapi
+          image: "devnsorg/devns-go:wgapi"
+          imagePullPolicy: Always
+          args:
+            - --port
+            - "80"
+            - --wg-endpoint
+            - "{{.Values.devns.wgapi.hostname}}:{{.Values.devns.wgapi.service.wg.port}}"
+          ports:
+            - name: wgapi-wg
+              containerPort: {{.Values.devns.wgapi.service.wg.port}}
+              protocol: UDP
+            - name: wgapi-http
+              containerPort: 80
+              protocol: TCP
+          volumeMounts:
+            - name: tun
+              mountPath: /dev/net/tun
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN

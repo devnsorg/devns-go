@@ -1,0 +1,17 @@
+{{- $fullName := include "devns.fullname" . -}}
+{{- $fullName = printf "%s-%s" $fullName "wgapi-wg" -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- include "devns.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.devns.wgapi.service.wg.type }}
+  ports:
+    - port: {{ .Values.devns.wgapi.service.wg.port }}
+      targetPort: wgapi-wg
+      protocol: UDP
+      name: wg
+  selector:
+    {{- include "devns.selectorLabels" . | nindent 4 }}
