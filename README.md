@@ -28,7 +28,7 @@ Support local development
   https://localhost.devns.net
   ```
   
-- [ ] Support tunneling using Wireguard
+- [x] Support tunneling using Wireguard
  
 - [ ] Metrics
 
