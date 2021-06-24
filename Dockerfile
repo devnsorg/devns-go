@@ -31,6 +31,5 @@ COPY --from=BUILD /app/$MODULE/bin/ /app/
 RUN ls
 RUN chmod a+x *
 
-ENV DEVNS_MODULE $MODULE
-ENV DEVNS_VERSION $VERSION
-ENTRYPOINT /app/$DEVNS_MODULE-amd64-linux-$DEVNS_VERSION
+RUN mv $MODULE-amd64-linux-$VERSION entrypoint
+ENTRYPOINT ["/app/entrypoint"]
