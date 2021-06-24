@@ -37,13 +37,13 @@ func (w *WGPool) AddPoolPeer(subdomain string, publicKey wgtypes.Key, ipAddress 
 		subdomain:        subdomain,
 		address:          ipAddress,
 		publicKey:        publicKey,
-		lastReceiveBytes: 0,
+		lastReceiveBytes: -10, // To skip the first inactivity check
 	}
 }
 func (w *WGPool) AddPoolPeerByPubKey(publicKey wgtypes.Key) {
 	w.subdomains["default"] = &WGPoolPeer{
 		publicKey:        publicKey,
-		lastReceiveBytes: 0,
+		lastReceiveBytes: -10, // To skip the first inactivity check
 	}
 }
 
