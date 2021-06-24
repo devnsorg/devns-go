@@ -135,7 +135,7 @@ func (s *WGServer) configureDevice() {
 
 	pk, err := wgtypes.GeneratePrivateKey()
 
-	listenPort := 51820
+	listenPort := s.endpoint.Port
 
 	err = c.ConfigureDevice(s.iface, wgtypes.Config{
 		PrivateKey:   &pk,
