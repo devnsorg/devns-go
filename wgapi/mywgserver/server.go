@@ -217,7 +217,12 @@ func (s *WGServer) StopServer() {
 }
 
 func (s *WGServer) GetPeerAddressFor(subdomain string) net.IP {
-	return s.wgPool.GetPeerAddressBySubdomain(subdomain)
+	s.logger.Verbosef("GetPeerAddressFor %s", subdomain)
+	if s.wgPool.HasSubdomain(subdomain) {
+		return s.wgPool.GetPeerAddressBySubdomain(subdomain)
+	} else {
+		return nil
+	}
 }
 
 func checkIsRoot(logger *device.Logger) (bool, error) {

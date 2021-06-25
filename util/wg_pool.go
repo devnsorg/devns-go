@@ -47,6 +47,11 @@ func (w *WGPool) AddPoolPeerByPubKey(publicKey wgtypes.Key) {
 	}
 }
 
+func (w *WGPool) HasSubdomain(subdomain string) bool {
+	_, ok := w.subdomains[subdomain]
+	return ok
+}
+
 func (w *WGPool) GetPeerAddressBySubdomain(subdomain string) net.IP {
 	return w.subdomains[subdomain].address
 }

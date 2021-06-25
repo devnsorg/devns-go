@@ -43,9 +43,10 @@ func (h *HTTPServer) StartServer() chan error {
 		}
 
 		var rr dns.RR
+		var subdomain = strings.Split(question.Name, ".")[0]
 		switch question.Qtype {
 		case dns.TypeA:
-			if val := h.server.GetPeerAddressFor(strings.ToLower(question.Name)); val != nil {
+			if val := h.server.GetPeerAddressFor(strings.ToLower(subdomain)); val != nil {
 				rr = &dns.A{
 					Hdr: dns.RR_Header{
 						Name:     question.Name,
