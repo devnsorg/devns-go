@@ -168,13 +168,10 @@ func (s *WGServer) AddClientPeer(subdomain string) []byte {
 		Peers: []wgtypes.PeerConfig{
 			{
 				PublicKey:                   peerKey.PublicKey(),
-				Remove:                      false,
-				UpdateOnly:                  false,
-				ReplaceAllowedIPs:           true,
 				PersistentKeepaliveInterval: &s.duration,
 				AllowedIPs: []net.IPNet{{
 					IP:   clientIP,
-					Mask: s.ipPool.CurrentIPMask(),
+					Mask: net.CIDRMask(32, 32),
 				}},
 			}},
 	})
@@ -186,26 +183,22 @@ func (s *WGServer) AddClientPeer(subdomain string) []byte {
 	wgQuickConfig := util.WgQuickConfig{
 
 		Config: wgtypes.Config{
-			PrivateKey:   &peerKey,
-			ListenPort:   nil,
-			ReplacePeers: true,
+			PrivateKey: &peerKey,
 			Peers: []wgtypes.PeerConfig{
 				{
 					PublicKey:                   d.PublicKey,
-					Remove:                      false,
-					UpdateOnly:                  false,
-					PresharedKey:                nil,
 					Endpoint:                    s.endpoint,
 					PersistentKeepaliveInterval: &s.duration,
-					ReplaceAllowedIPs:           true,
 					AllowedIPs: []net.IPNet{{
 						IP:   serverIP,
 						Mask: s.ipPool.CurrentIPMask(),
 					}},
 				},
 			}},
-		Address: []net.IPNet{{IP: clientIP,
-			Mask: net.CIDRMask(32, 32)}},
+		Address: []net.IPNet{{
+			IP:   clientIP,
+			Mask: s.ipPool.CurrentIPMask(),
+		}},
 	}
 
 	configs, err := wgQuickConfig.MarshalText()
